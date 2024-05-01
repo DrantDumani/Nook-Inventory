@@ -1,0 +1,35 @@
+extends layout 
+
+block content
+  h1= title 
+  
+  form(method="POST")
+    div
+      label(for="name") Name:
+      input#name(required name="name" placeholder="Name of item" value=(item ? item.name : ""))
+    div
+      label(for="description")
+      textarea#description(required name="description" placeholder="Summary of the item")= item ? item.description : ""
+    div
+      h2 Categories:
+
+      div
+        each category in allCategories
+          if (category.checked)
+            input(id=category._id checked type="checkbox" name="category" value=category._id)
+          else
+            input(id=category._id type="checkbox" name="category" value=category._id)
+          label(for=category._id) &nbsp;#{category.name}
+    div
+      label(for="stock") In Stock:
+      input#stock(type="number" required name="stock" placeholder="Item Amount" value=(item ? item.inStock : 0))
+
+    div
+      label(for="price") Price: 
+      input#price(type="number" required name="price" placeholder="Price of item" value=(item ? item.price : 0))
+    button Submit 
+
+    if errors
+      ul
+        for err in errors
+          li!= err.msg

@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1= title
+  if allItems.length 
+    ul
+      each item in allItems
+        li
+          a(href=item.url) #{item.name} 
+          | - $#{item.price}
+  
+  else 
+    p The are no items in the inventory.

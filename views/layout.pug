@@ -3,5 +3,24 @@ html
   head
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
+    meta(name="viewport", content="width=device-width, initial-scale=1")
   body
-    block content
+    header.header
+      nav
+        ul.nav-list
+          li.nav-item--full-column
+            a.nav-link.logo(href="/inventory") Nook Inventory
+          li.nav-item
+            a.nav-link(href="/inventory/items") Items
+          li.nav-item
+            a.nav-link(href="/inventory/categories") Categories
+
+    main.main
+      div.btn-container
+        a.btn-link(href="/inventory/item/create") Create Item
+        a.btn-link(href="/inventory/category/create") Create Category
+      div.main-content
+        block content
+
+    footer.footer
+      p Created by Darnell

@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  div
+    h1 #{singleItem.name}
+    p #{singleItem.description}
+    p #{singleItem.price}
+    if singleItem.inStock
+      p There are currently #{singleItem.inStock} in stock
+    else
+      p This item is out of stock.
+    
+    h2 Categories
+
+    ul
+      each category in singleItem.category
+        li
+          a(href=category.url) #{category.name}
+
+    div
+      p
+        a(href=singleItem.url+"/update") Update Item
+      p
+        a(href=singleItem.url+"/delete") Delete Item
