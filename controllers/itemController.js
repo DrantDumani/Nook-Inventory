@@ -53,18 +53,7 @@ exports.item_create_post = [
     next();
   },
 
-  body("name", "Name must not be empty")
-    .custom(async (value) => {
-      const itemExists = Item.findOne({ name: value })
-        .collation({ locale: "en", strength: 2 })
-        .exec();
-
-      if (itemExists) {
-        throw new Error("An item with this name already exists");
-      }
-    })
-    .trim()
-    .isLength({ min: 1 }),
+  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
   body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
   body("category", "Pick at least one category").isArray({ min: 1 }),
   body("stock", "Stock cannot be empty")
@@ -76,6 +65,16 @@ exports.item_create_post = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
+    let duplicateNameErr = "";
+
+    const nameExists = await Item.findOne({ name: req.body.name })
+      .collation({ locale: "en", strength: 2 })
+      .exec();
+
+    if (nameExists) {
+      duplicateNameErr =
+        "There is another item with that name in the inventory.";
+    }
 
     const item = new Item({
       name: req.body.name,
@@ -85,7 +84,7 @@ exports.item_create_post = [
       price: req.body.price,
     });
 
-    if (!errors.isEmpty()) {
+    if (!errors.isEmpty() || duplicateNameErr) {
       const allCategories = await Category.find().sort({ name: 1 }).exec();
 
       for (const category of allCategories) {
@@ -99,6 +98,7 @@ exports.item_create_post = [
         allCategories,
         item: item,
         errors: errors.array(),
+        nameErr: duplicateNameErr,
       });
     } else {
       await item.save();
@@ -154,18 +154,7 @@ exports.item_update_post = [
     next();
   },
 
-  body("name", "Name must not be empty")
-    .custom(async (value) => {
-      const itemExists = Item.findOne({ name: value })
-        .collation({ locale: "en", strength: 2 })
-        .exec();
-
-      if (itemExists) {
-        throw new Error("An item with this name already exists");
-      }
-    })
-    .trim()
-    .isLength({ min: 1 }),
+  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
   body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
   body("category", "Pick at least one category").isArray({ min: 1 }),
   body("stock", "Stock cannot be empty")
@@ -177,6 +166,23 @@ exports.item_update_post = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
+    let duplicateNameErr = "";
+
+    const [validId, nameExists] = await Promise.all([
+      Item.findById(req.params.id, "name").exec(),
+      Item.findOne({ name: req.body.name })
+        .collation({ locale: "en", strength: 2 })
+        .exec(),
+    ]);
+
+    if (
+      validId &&
+      nameExists &&
+      validId._id.toString() !== nameExists._id.toString()
+    ) {
+      duplicateNameErr =
+        "There is another item with that name in the inventory.";
+    }
 
     const item = new Item({
       name: req.body.name,
@@ -187,7 +193,7 @@ exports.item_update_post = [
       _id: req.params.id,
     });
 
-    if (!errors.isEmpty()) {
+    if (!errors.isEmpty() || duplicateNameErr) {
       const allCategories = await Category.find().sort({ name: 1 }).exec();
 
       for (const category of allCategories) {
@@ -197,10 +203,11 @@ exports.item_update_post = [
       }
 
       res.render("itemForm", {
-        title: "Create item",
+        title: "Update Item",
         allCategories,
         item: item,
         errors: errors.array(),
+        nameErr: duplicateNameErr,
       });
     } else {
       const updatedItem = await Item.findByIdAndUpdate(req.params.id, item);
