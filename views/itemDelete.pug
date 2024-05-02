@@ -2,12 +2,12 @@ extends layout
 
 block content
   div
-    h1 #{singleItem.name}
-    p #{singleItem.inStock} remaining.
+    h1.page-header #{singleItem.name}
+    p.padding-bot #{singleItem.inStock} remaining.
 
-    p Are you sure you want to delete this item?
+    p.padding-bot Are you sure you want to delete this item?
       strong (This action is irreversible!)
     form(method="POST")
       input(type="hidden" value=singleItem._id name="itemId")
     
-      button Delete
+      button.delete-link-btn Delete

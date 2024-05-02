@@ -1,24 +1,23 @@
 extends layout
 
 block content
-  div
-    h1 #{singleItem.name}
+  div.detail-wrapper
+    h1.page-header #{singleItem.name}
     p #{singleItem.description}
-    p #{singleItem.price}
+    p #[span.bold-label Price:] #{singleItem.price}
     if singleItem.inStock
-      p There are currently #{singleItem.inStock} in stock
+      p #[span.bold-label Amount in Stock:] #{singleItem.inStock}
     else
-      p This item is out of stock.
+      p #[span.bold-label Amount in Stock:] This item is out of stock.
     
-    h2 Categories
-
-    ul
-      each category in singleItem.category
-        li
-          a(href=category.url) #{category.name}
-
     div
-      p
-        a(href=singleItem.url+"/update") Update Item
-      p
-        a(href=singleItem.url+"/delete") Delete Item
+      h2.page-header Categories
+
+      ul.sub-list
+        each category in singleItem.category
+          li
+            a.sub-list-link(href=category.url) #{category.name}
+
+      div.link-btn-container
+        a.link-btn(href=singleItem.url+"/update") Update Item
+        a.link-btn.delete-link-btn(href=singleItem.url+"/delete") Delete Item

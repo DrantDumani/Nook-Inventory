@@ -1,9 +1,9 @@
 extends layout
 
 block content 
-  h1=title 
+  h1.page-header=title 
   if categories.length
-    ul
+    ul.content-list
       each category in categories 
         li
           a(href=category.url) #{category.name}

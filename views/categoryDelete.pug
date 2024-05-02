@@ -2,22 +2,22 @@ extends layout
 
 block content 
   div
-    h1 #{category.name} 
-    p #{category.description}
+    h1.page-header #{category.name} 
+    p.padding-bot #{category.description}
 
     if allItems.length 
-      p
+      p.padding-bot
         strong Please delete the following items before attempting to delete this category.
-      ul
+      ul.sub-list
         each item in allItems
           li
             a(href=item.url) #{item.name}
     
     else 
-      p Are you sure you want to delete this category? 
+      p.padding-bot Are you sure you want to delete this category? 
         strong (This action is irreversible!)
       
       form(method="POST")
         input(type="hidden" value=category._id name="categoryId")
 
-        button Delete
+        button.delete-link-btn Delete
