@@ -8,7 +8,7 @@ block content
       label(for="name") Name:
       input#name(required name="name" placeholder="Name of item" value=(item ? item.name : ""))
     div
-      label(for="description")
+      label(for="description") Description:
       textarea#description(required name="description" placeholder="Summary of the item")= item ? item.description : ""
     div
       h2 Categories:
@@ -29,7 +29,8 @@ block content
       input#price(type="number" required name="price" placeholder="Price of item" value=(item ? item.price : 0))
     button Submit 
 
-    if errors
-      ul
-        for err in errors
-          li!= err.msg
+  if errors || nameErr
+    ul
+      li!= nameErr
+      for err in errors
+        li!= err.msg

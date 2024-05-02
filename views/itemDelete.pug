@@ -5,7 +5,8 @@ block content
     h1 #{singleItem.name}
     p #{singleItem.inStock} remaining.
 
-    p Are you sure you want to delete this item? (This action is irreversible!)
+    p Are you sure you want to delete this item?
+      strong (This action is irreversible!)
     form(method="POST")
       input(type="hidden" value=singleItem._id name="itemId")
     

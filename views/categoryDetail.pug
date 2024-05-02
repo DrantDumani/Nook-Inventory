@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  div
+    h1=title
+    h2 #{category.description}
+
+    if allItems.length
+      ul
+        each item in allItems
+          li
+            a(href=item.url) #{item.name}
+    
+    div
+      p
+        a(href=category.url+"/update") Update Category 
+      p
+        a(href=category.url+"/delete") Delete Category

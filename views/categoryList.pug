@@ -1,0 +1,12 @@
+extends layout
+
+block content 
+  h1=title 
+  if categories.length
+    ul
+      each category in categories 
+        li
+          a(href=category.url) #{category.name}
+  
+  else
+    p There are no categories listed in the inventory
