@@ -53,7 +53,18 @@ exports.item_create_post = [
     next();
   },
 
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
+  body("name", "Name must not be empty")
+    .custom(async (value) => {
+      const itemExists = Item.findOne({ name: value })
+        .collation({ locale: "en", strength: 2 })
+        .exec();
+
+      if (itemExists) {
+        throw new Error("An item with this name already exists");
+      }
+    })
+    .trim()
+    .isLength({ min: 1 }),
   body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
   body("category", "Pick at least one category").isArray({ min: 1 }),
   body("stock", "Stock cannot be empty")
@@ -143,7 +154,18 @@ exports.item_update_post = [
     next();
   },
 
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
+  body("name", "Name must not be empty")
+    .custom(async (value) => {
+      const itemExists = Item.findOne({ name: value })
+        .collation({ locale: "en", strength: 2 })
+        .exec();
+
+      if (itemExists) {
+        throw new Error("An item with this name already exists");
+      }
+    })
+    .trim()
+    .isLength({ min: 1 }),
   body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
   body("category", "Pick at least one category").isArray({ min: 1 }),
   body("stock", "Stock cannot be empty")
