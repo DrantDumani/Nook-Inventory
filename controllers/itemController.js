@@ -61,7 +61,7 @@ exports.item_create_post = [
     .withMessage("Stock must be whole number greater than -1"),
   body("price", "Price must not be empty")
     .isInt({ min: 1 })
-    .withMessage("Price cannot be 0 or lower"),
+    .withMessage("Price must be whole number greater than 0"),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -162,7 +162,7 @@ exports.item_update_post = [
     .withMessage("Stock must be whole number greater than -1"),
   body("price", "Price must not be empty")
     .isInt({ min: 1 })
-    .withMessage("Price cannot be 0 or lower"),
+    .withMessage("Price must be whole number greater than 0"),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
