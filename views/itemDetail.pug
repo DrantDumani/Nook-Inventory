@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  div.detail-wrapper
+    h1.page-header #{singleItem.name}
+    img.item-image(src=singleItem.image.url || "/images/notFound.png" alt="")
+    p #{singleItem.description}
+    p #[span.bold-label Price:] $#{singleItem.price}
+    if singleItem.inStock
+      p #[span.bold-label Amount in Stock:] #{singleItem.inStock}
+    else
+      p #[span.bold-label Amount in Stock:] This item is out of stock.
+    
+    div
+      h2.page-header Categories
+
+      ul.sub-list
+        each category in singleItem.category
+          li
+            a.sub-list-link(href=category.url) #{category.name}
+
+      div.link-btn-container
+        a.link-btn(href=singleItem.url+"/update") Update Item
+        a.link-btn.delete-link-btn(href=singleItem.url+"/delete") Delete Item

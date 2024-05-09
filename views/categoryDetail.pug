@@ -1,0 +1,20 @@
+extends layout
+
+block content
+  div.detail-wrapper
+    h1.page-header=title
+    p #{category.description}
+
+    div
+      h2.page-header Items
+      if allItems.length
+        ul.sub-list
+          each item in allItems
+            li
+              a.sub-list-link(href=item.url) #{item.name}
+      else
+        p There are no items in this category
+    
+    div.link-btn-container
+      a.link-btn(href=category.url+"/update") Update Category 
+      a.link-btn.delete-link-btn(href=category.url+"/delete") Delete Category

@@ -1,0 +1,20 @@
+extends layout 
+
+block content
+  div
+    h1.page-header #{singleItem.name}
+    p.padding-bot #{singleItem.inStock} remaining.
+
+    p.padding-bot Are you sure you want to delete this item?
+      strong (This action is irreversible!)
+    form.delete-form(method="POST")
+      input(type="hidden" value=singleItem._id name="itemId")
+      div.label-input
+        label(for="password") Password:
+        input#password(type="password" required name="password")
+      button.delete-link-btn Delete
+    
+    if errors
+      ul.sub-list
+        for err in errors
+          li!= err.msg

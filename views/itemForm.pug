@@ -1,0 +1,51 @@
+extends layout 
+
+block content
+  h1.page-header= title 
+
+  if allCategories.length
+  
+    form.create-form(method="POST" enctype="multipart/form-data")
+      div.label-input
+        label(for="name") Name:
+        input#name(required name="name" placeholder="Name of item" value=(item ? item.name : ""))
+      div.label-input
+        label(for="image") Image:
+        input#image(type="file" name="image-file" accept="image/png, image/jpg, image/jpeg")
+      div.label-input
+        label(for="description") Description:
+        textarea#description(required name="description" placeholder="Summary of the item")= item ? item.description : ""
+      div
+        p.page-header Categories:
+
+        div.checkbox-wrapper
+          each category in allCategories
+            div
+              if (category.checked)
+                input(id=category._id checked type="checkbox" name="category" value=category._id)
+              else
+                input(id=category._id type="checkbox" name="category" value=category._id)
+              label(for=category._id) &nbsp;#{category.name}
+      div.label-input
+        label(for="stock") In Stock:
+        input#stock(type="number" required name="stock" placeholder="Item Amount" value=(item ? item.inStock : 0))
+
+      div.label-input
+        label(for="price") Price: 
+        input#price(type="number" required name="price" placeholder="Price of item" value=(item ? item.price : 0))
+      if requirePass
+        div.label-input
+          label(for="password") Password: 
+          input#password(type="password" required name="password")
+      button Submit 
+
+    if errors || nameErr
+      ul.sub-list
+        if nameErr
+          li!= nameErr
+        for err in errors
+          li!= err.msg
+
+  else 
+    
+    p There are no categories to class items. Please create a category first.

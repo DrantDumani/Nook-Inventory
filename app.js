@@ -1,4 +1,6 @@
 const createError = require("http-errors");
+const compression = require("compression");
+const helmet = require("helmet");
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -7,7 +9,6 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/users");
 const inventoryRouter = require("./routes/inventory");
 
 mongoose.set("strictQuery", "false");
@@ -19,6 +20,14 @@ async function main() {
 }
 
 const app = express();
+app.use(compression());
+app.use(helmet());
+
+const RateLimit = require("express-rate-limit");
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 100,
+});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -31,7 +40,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/inventory", inventoryRouter);
 
 // catch 404 and forward to error handler

@@ -11,7 +11,7 @@ const ItemSchema = new Schema({
     min: [0, "Stock cannot be negative"],
   },
   price: { type: Number, required: true, min: [1, "Must be higher than 0"] },
-  image: { type: String },
+  image: { url: { type: String }, publicId: { type: String } },
 });
 
 ItemSchema.virtual("url").get(function () {

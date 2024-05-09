@@ -1,0 +1,24 @@
+extends layout 
+
+block content 
+  h1.page-header=title 
+
+  form.create-form(method="POST")
+    div.label-input
+      label(for="name") Name: 
+      input#name(required name="name" placeholder="Name of Category" value=(category ? category.name : ""))
+    div.label-input
+      label(for="description") Description: 
+      textarea#description(required name="description" placeholder="Defintion of category")= category ? category.description : ""
+    if requirePass
+      div.label-input
+        label(for="password") Password: 
+        input#password(type="password" required name="password")
+    button Submit 
+
+  if errors || nameErr
+    ul.sub-list
+      if nameErr 
+        li!= nameErr
+      for err in errors
+        li!= err.msg
