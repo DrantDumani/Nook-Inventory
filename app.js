@@ -1,4 +1,6 @@
 const createError = require("http-errors");
+const compression = require("compression");
+const helmet = require("helmet");
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -18,6 +20,14 @@ async function main() {
 }
 
 const app = express();
+app.use(compression());
+app.use(helmet());
+
+const RateLimit = require("express-rate-limit");
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 100,
+});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
