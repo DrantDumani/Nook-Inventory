@@ -5,10 +5,13 @@ block content
 
   if allCategories.length
   
-    form.create-form(method="POST")
+    form.create-form(method="POST" enctype="multipart/form-data")
       div.label-input
         label(for="name") Name:
         input#name(required name="name" placeholder="Name of item" value=(item ? item.name : ""))
+      div.label-input
+        label(for="image") Image:
+        input#image(type="file" name="image-file" accept="image/png, image/jpg, image/jpeg")
       div.label-input
         label(for="description") Description:
         textarea#description(required name="description" placeholder="Summary of the item")= item ? item.description : ""

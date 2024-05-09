@@ -121,6 +121,13 @@ nav {
   gap: 0.6em;
 }
 
+.item-image {
+  width: 8rem;
+  padding-bottom: 1rem;
+  height: 8rem;
+  object-fit: contain;
+}
+
 .bold-label {
   font-weight: 600;
 }

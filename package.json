@@ -8,6 +8,7 @@
     "serverstart": "SET DEBUG=inventory:* & npm run devstart"
   },
   "dependencies": {
+    "cloudinary": "^2.2.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "dotenv": "^16.4.5",
@@ -17,6 +18,7 @@
     "http-errors": "~1.6.3",
     "mongoose": "^8.3.2",
     "morgan": "~1.9.1",
+    "multer": "^1.4.5-lts.1",
     "pug": "2.0.0-beta11"
   },
   "devDependencies": {

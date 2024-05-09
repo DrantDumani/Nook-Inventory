@@ -2,6 +2,21 @@ const Item = require("../models/item");
 const Category = require("../models/category");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+require("dotenv").config();
+
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1000000, files: 1 },
+});
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 
 exports.index = asyncHandler(async (req, res, next) => {
   const [itemCount, categoryCount] = await Promise.all([
@@ -46,6 +61,7 @@ exports.item_create_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.item_create_post = [
+  upload.single("image-file"),
   (req, res, next) => {
     if (!Array.isArray(req.body.category)) {
       req.body.category = req.body.category ? [req.body.category] : [];
@@ -64,7 +80,7 @@ exports.item_create_post = [
     .withMessage("Price must be whole number greater than 0"),
 
   asyncHandler(async (req, res, next) => {
-    const errors = validationResult(req);
+    const errors = validationResult(req).array();
     let duplicateNameErr = "";
 
     const nameExists = await Item.findOne({ name: req.body.name })
@@ -84,7 +100,7 @@ exports.item_create_post = [
       price: req.body.price,
     });
 
-    if (!errors.isEmpty() || duplicateNameErr) {
+    if (errors.length || duplicateNameErr) {
       const allCategories = await Category.find().sort({ name: 1 }).exec();
 
       for (const category of allCategories) {
@@ -97,10 +113,25 @@ exports.item_create_post = [
         title: "Create item",
         allCategories,
         item: item,
-        errors: errors.array(),
+        errors: errors,
         nameErr: duplicateNameErr,
       });
     } else {
+      if (req.file) {
+        const upload = await new Promise((resolve) => {
+          cloudinary.uploader
+            .upload_stream((err, result) => {
+              return resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+        const { public_id } = upload;
+        const transformURL = cloudinary.url(public_id, {
+          width: 128,
+          height: 128,
+        });
+        item.image = { publicId: public_id, url: transformURL };
+      }
       await item.save();
       res.redirect(item.url);
     }
@@ -119,7 +150,10 @@ exports.item_delete_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.item_delete_post = asyncHandler(async (req, res, next) => {
-  await Item.findByIdAndDelete(req.body.itemId);
+  const deleted = await Item.findByIdAndDelete(req.body.itemId).exec();
+  if (deleted.image.url) {
+    await cloudinary.uploader.destroy(deleted.image.publicId);
+  }
   res.redirect("/inventory/items");
 });
 
@@ -147,6 +181,7 @@ exports.item_update_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.item_update_post = [
+  upload.single("image-file"),
   (req, res, next) => {
     if (!Array.isArray(req.body.category)) {
       req.body.category = req.body.category ? [req.body.category] : [];
@@ -169,7 +204,7 @@ exports.item_update_post = [
     let duplicateNameErr = "";
 
     const [validId, nameExists] = await Promise.all([
-      Item.findById(req.params.id, "name").exec(),
+      Item.findById(req.params.id, "name image").exec(),
       Item.findOne({ name: req.body.name })
         .collation({ locale: "en", strength: 2 })
         .exec(),
@@ -190,6 +225,7 @@ exports.item_update_post = [
       category: req.body.category,
       inStock: req.body.stock,
       price: req.body.price,
+      image: { url: validId?.image?.url, publicId: validId?.image?.publicId },
       _id: req.params.id,
     });
 
@@ -210,6 +246,27 @@ exports.item_update_post = [
         nameErr: duplicateNameErr,
       });
     } else {
+      if (req.file) {
+        const { publicId } = validId.image;
+        let upload = null;
+        const options = publicId
+          ? { public_id: publicId, invalidate: true, overwrite: true }
+          : {};
+        upload = await new Promise((resolve) => {
+          cloudinary.uploader
+            .upload_stream(options, (err, result) => {
+              return resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+        const { public_id } = upload;
+        const transformURL = cloudinary.url(public_id, {
+          width: 128,
+          height: 128,
+          version: upload.version,
+        });
+        item.image = { publicId: public_id, url: transformURL };
+      }
       const updatedItem = await Item.findByIdAndUpdate(req.params.id, item);
       res.redirect(updatedItem.url);
     }

@@ -3,6 +3,7 @@ extends layout
 block content
   div.detail-wrapper
     h1.page-header #{singleItem.name}
+    img.item-image(src=singleItem.image.url || "/images/notFound.png" alt="")
     p #{singleItem.description}
     p #[span.bold-label Price:] #{singleItem.price}
     if singleItem.inStock
