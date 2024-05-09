@@ -93,24 +93,31 @@ exports.category_delete_get = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.category_delete_post = asyncHandler(async (req, res, next) => {
-  const [category, itemsInCategory] = await Promise.all([
-    Category.findById(req.params.id).exec(),
-    Item.find({ category: req.params.id }, "name").sort({ name: 1 }).exec(),
-  ]);
+exports.category_delete_post = [
+  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
 
-  if (itemsInCategory.length) {
-    res.render("categoryDelete", {
-      title: "Delete Category",
-      allItems: itemsInCategory,
-      category: category,
-    });
-    return;
-  } else {
-    await Category.findByIdAndDelete(req.body.categoryId);
-    res.redirect("/inventory/categories");
-  }
-});
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    const [category, itemsInCategory] = await Promise.all([
+      Category.findById(req.params.id).exec(),
+      Item.find({ category: req.params.id }, "name").sort({ name: 1 }).exec(),
+    ]);
+
+    if (itemsInCategory.length || !errors.isEmpty()) {
+      res.render("categoryDelete", {
+        title: "Delete Category",
+        allItems: itemsInCategory,
+        category: category,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      await Category.findByIdAndDelete(req.body.categoryId);
+      res.redirect("/inventory/categories");
+    }
+  }),
+];
 
 exports.category_update_get = asyncHandler(async (req, res, next) => {
   const category = await Category.findById(req.params.id).exec();
@@ -124,6 +131,7 @@ exports.category_update_get = asyncHandler(async (req, res, next) => {
   res.render("categoryForm", {
     title: "Update Category",
     category: category,
+    requirePass: true,
   });
 });
 
@@ -132,6 +140,7 @@ exports.category_update_post = [
   body("description", "Description cannot be empty")
     .trim()
     .isLength({ min: 1 }),
+  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -166,6 +175,7 @@ exports.category_update_post = [
         category: category,
         errors: errors.array(),
         nameErr: duplicateNameErr,
+        requirePass: true,
       });
     } else {
       const updatedCategory = await Category.findByIdAndUpdate(

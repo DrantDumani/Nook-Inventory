@@ -149,13 +149,32 @@ exports.item_delete_get = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.item_delete_post = asyncHandler(async (req, res, next) => {
-  const deleted = await Item.findByIdAndDelete(req.body.itemId).exec();
-  if (deleted.image.url) {
-    await cloudinary.uploader.destroy(deleted.image.publicId);
-  }
-  res.redirect("/inventory/items");
-});
+exports.item_delete_post = [
+  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      const item = await Item.findById(req.params.id, "name inStock").exec();
+
+      if (!item) res.redirect("/inventory/items");
+      else {
+        res.render("itemDelete", {
+          title: "Delete Item",
+          singleItem: item,
+          errors: errors.array(),
+        });
+      }
+    } else {
+      const deleted = await Item.findByIdAndDelete(req.body.itemId).exec();
+      if (deleted.image.url) {
+        await cloudinary.uploader.destroy(deleted.image.publicId);
+      }
+      res.redirect("/inventory/items");
+    }
+  }),
+];
 
 exports.item_update_get = asyncHandler(async (req, res, next) => {
   const [item, allCategories] = await Promise.all([
@@ -177,6 +196,7 @@ exports.item_update_get = asyncHandler(async (req, res, next) => {
     title: "Update Item",
     item: item,
     allCategories: allCategories,
+    requirePass: true,
   });
 });
 
@@ -198,6 +218,7 @@ exports.item_update_post = [
   body("price", "Price must not be empty")
     .isInt({ min: 1 })
     .withMessage("Price must be whole number greater than 0"),
+  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -244,6 +265,7 @@ exports.item_update_post = [
         item: item,
         errors: errors.array(),
         nameErr: duplicateNameErr,
+        requirePass: true,
       });
     } else {
       if (req.file) {
