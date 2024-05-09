@@ -33,7 +33,7 @@ exports.single_category = asyncHandler(async (req, res, next) => {
 });
 
 exports.category_create_get = asyncHandler(async (req, res, next) => {
-  res.render("CategoryForm", { title: "Create Category" });
+  res.render("categoryForm", { title: "Create Category" });
 });
 
 exports.category_create_post = [
@@ -63,7 +63,7 @@ exports.category_create_post = [
     });
 
     if (!errors.isEmpty() || duplicateNameErr) {
-      res.render("CategoryForm", {
+      res.render("categoryForm", {
         title: "Create Category",
         category: category,
         errors: errors.array(),
