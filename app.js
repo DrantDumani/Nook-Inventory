@@ -22,7 +22,14 @@ async function main() {
 
 const app = express();
 app.use(compression());
-app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "img-src": ["'self'", "https://res.cloudinary.com/"],
+      "script-src": ["'self'"],
+    },
+  })
+);
 
 const RateLimit = require("express-rate-limit");
 const limiter = RateLimit({
