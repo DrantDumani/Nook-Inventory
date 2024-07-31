@@ -6,7 +6,7 @@ block content
     ul.content-list
       each item in allItems
         li
-          a(href=item.url) #{item.name} 
+          a(href=`/inventory/item/${item.id}`) #{item.name} 
           | - $#{item.price}
   
   else 

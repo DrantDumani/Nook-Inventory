@@ -3,11 +3,11 @@ extends layout
 block content
   div.detail-wrapper
     h1.page-header #{singleItem.name}
-    img.item-image(src=singleItem.image.url || "/images/notFound.png" alt="")
+    img.item-image(src=singleItem.image || "/images/notFound.png" alt="")
     p #{singleItem.description}
     p #[span.bold-label Price:] $#{singleItem.price}
-    if singleItem.inStock
-      p #[span.bold-label Amount in Stock:] #{singleItem.inStock}
+    if singleItem.instock
+      p #[span.bold-label Amount in Stock:] #{singleItem.instock}
     else
       p #[span.bold-label Amount in Stock:] This item is out of stock.
     
@@ -15,9 +15,9 @@ block content
       h2.page-header Categories
 
       ul.sub-list
-        each category in singleItem.category
+        each category in singleItem.categories
           li
-            a.sub-list-link(href=category.url) #{category.name}
+            a.sub-list-link(href=`/inventory/category/${category.catId}`) #{category.catName}
 
       div.link-btn-container
         a.link-btn(href=singleItem.url+"/update") Update Item

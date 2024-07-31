@@ -22,10 +22,10 @@ block content
           each category in allCategories
             div
               if (category.checked)
-                input(id=category._id checked type="checkbox" name="category" value=category._id)
+                input(id=category.id checked type="checkbox" name="category" value=category.id)
               else
-                input(id=category._id type="checkbox" name="category" value=category._id)
-              label(for=category._id) &nbsp;#{category.name}
+                input(id=category.id type="checkbox" name="category" value=category.id)
+              label(for=category.id) &nbsp;#{category.name}
       div.label-input
         label(for="stock") In Stock:
         input#stock(type="number" required name="stock" placeholder="Item Amount" value=(item ? item.inStock : 0))

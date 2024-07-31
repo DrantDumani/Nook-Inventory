@@ -4,6 +4,7 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const queries = require("../db/queries");
 require("dotenv").config();
 
 const storage = multer.memoryStorage();
@@ -18,20 +19,35 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
+// exports.OLDindex = asyncHandler(async (req, res, next) => {
+//   const [itemCount, categoryCount] = await Promise.all([
+//     Item.countDocuments().exec(),
+//     Category.countDocuments().exec(),
+//   ]);
+//   res.render("index", { title: "Inventory", itemCount, categoryCount });
+// });
+
 exports.index = asyncHandler(async (req, res, next) => {
-  const [itemCount, categoryCount] = await Promise.all([
-    Item.countDocuments().exec(),
-    Category.countDocuments().exec(),
-  ]);
-  res.render("index", { title: "Inventory", itemCount, categoryCount });
+  const result = await queries.countItemsAndCategories();
+  const { itemtotal, categorytotal } = result[0];
+  res.render("index", {
+    title: "Inventory",
+    itemCount: itemtotal,
+    categoryCount: categorytotal,
+  });
 });
 
+// exports.OLDitem_list = asyncHandler(async (req, res, next) => {
+//   const allItems = await Item.find({}, "name price").sort({ name: 1 }).exec();
+//   res.render("itemList", { allItems, title: "Item List" });
+// });
+
 exports.item_list = asyncHandler(async (req, res, next) => {
-  const allItems = await Item.find({}, "name price").sort({ name: 1 }).exec();
+  const allItems = await queries.getItemList();
   res.render("itemList", { allItems, title: "Item List" });
 });
 
-exports.single_item = asyncHandler(async (req, res, next) => {
+exports.OLDsingle_item = asyncHandler(async (req, res, next) => {
   const singleItem = await Item.findById(req.params.id)
     .populate({
       path: "category",
@@ -51,15 +67,40 @@ exports.single_item = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.item_create_get = asyncHandler(async (req, res, next) => {
-  const allCategories = await Category.find().sort({ name: 1 }).exec();
+exports.single_item = asyncHandler(async (req, res, next) => {
+  const singleItem = await queries.getItemById(req.params.id);
 
-  res.render("itemForm", {
-    title: "Create Item",
-    allCategories,
+  if (!singleItem) {
+    const err = new Error("Item not found.");
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render("itemDetail", {
+    title: singleItem.name,
+    singleItem,
   });
 });
 
+// exports.OLDitem_create_get = asyncHandler(async (req, res, next) => {
+//   const allCategories = await Category.find().sort({ name: 1 }).exec();
+
+//   res.render("itemForm", {
+//     title: "Create Item",
+//     allCategories,
+//   });
+// });
+
+exports.item_create_get = asyncHandler(async (req, res, next) => {
+  const allCategories = await queries.getCategoryList();
+
+  res.render("itemForm", { title: "Create Item", allCategories });
+});
+
+//create the item first
+//after the item is successfully created, upload the image to cloudinary and store its data in table
+// if the item does not get successfully created, then there is no point in even uploading the image to cloudinary
+//ALSO, the server will not be responsible for filtering duplicate names.
 exports.item_create_post = [
   upload.single("image-file"),
   (req, res, next) => {
@@ -80,31 +121,21 @@ exports.item_create_post = [
     .withMessage("Price must be whole number greater than 0"),
 
   asyncHandler(async (req, res, next) => {
+    console.log(req.file);
     const errors = validationResult(req).array();
-    let duplicateNameErr = "";
-
-    const nameExists = await Item.findOne({ name: req.body.name })
-      .collation({ locale: "en", strength: 2 })
-      .exec();
-
-    if (nameExists) {
-      duplicateNameErr =
-        "There is another item with that name in the inventory.";
-    }
-
-    const item = new Item({
+    const item = {
       name: req.body.name,
       description: req.body.description,
-      category: req.body.category,
       inStock: req.body.stock,
       price: req.body.price,
-    });
+      category: req.body.category,
+    };
 
-    if (errors.length || duplicateNameErr) {
-      const allCategories = await Category.find().sort({ name: 1 }).exec();
+    if (errors.length) {
+      const allCategories = await queries.getCategoryList();
 
       for (const category of allCategories) {
-        if (item.category.includes(category._id)) {
+        if (item.category.includes(category.id)) {
           category.checked = "true";
         }
       }
@@ -114,9 +145,11 @@ exports.item_create_post = [
         allCategories,
         item: item,
         errors: errors,
-        nameErr: duplicateNameErr,
       });
     } else {
+      const row = await queries.createItem(item);
+      const item_id = row[0].item_id;
+
       if (req.file) {
         const upload = await new Promise((resolve) => {
           cloudinary.uploader
@@ -130,13 +163,91 @@ exports.item_create_post = [
           width: 128,
           height: 128,
         });
-        item.image = { publicId: public_id, url: transformURL };
+        await queries.insertOrUpdateImage(item_id, transformURL, public_id);
       }
-      await item.save();
-      res.redirect(item.url);
+
+      res.redirect(`/inventory/item/${item_id}`);
     }
   }),
 ];
+
+// exports.OLDitem_create_post = [
+//   upload.single("image-file"),
+//   (req, res, next) => {
+//     if (!Array.isArray(req.body.category)) {
+//       req.body.category = req.body.category ? [req.body.category] : [];
+//     }
+//     next();
+//   },
+
+//   body("name", "Name must not be empty").trim().isLength({ min: 1 }),
+//   body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
+//   body("category", "Pick at least one category").isArray({ min: 1 }),
+//   body("stock", "Stock cannot be empty")
+//     .isInt({ min: 0 })
+//     .withMessage("Stock must be whole number greater than -1"),
+//   body("price", "Price must not be empty")
+//     .isInt({ min: 1 })
+//     .withMessage("Price must be whole number greater than 0"),
+
+//   asyncHandler(async (req, res, next) => {
+//     const errors = validationResult(req).array();
+//     let duplicateNameErr = "";
+
+//     const nameExists = await Item.findOne({ name: req.body.name })
+//       .collation({ locale: "en", strength: 2 })
+//       .exec();
+
+//     if (nameExists) {
+//       duplicateNameErr =
+//         "There is another item with that name in the inventory.";
+//     }
+
+//     const item = new Item({
+//       name: req.body.name,
+//       description: req.body.description,
+//       category: req.body.category,
+//       inStock: req.body.stock,
+//       price: req.body.price,
+//     });
+
+//     if (errors.length || duplicateNameErr) {
+//       const allCategories = await Category.find().sort({ name: 1 }).exec();
+
+//       for (const category of allCategories) {
+//         if (item.category.includes(category._id)) {
+//           category.checked = "true";
+//         }
+//       }
+
+//       res.render("itemForm", {
+//         title: "Create item",
+//         allCategories,
+//         item: item,
+//         errors: errors,
+//         nameErr: duplicateNameErr,
+//       });
+//     } else {
+//       if (req.file) {
+//         const upload = await new Promise((resolve) => {
+//           cloudinary.uploader
+//             .upload_stream((err, result) => {
+//               return resolve(result);
+//             })
+//             .end(req.file.buffer);
+//         });
+//         const { public_id } = upload;
+//         const transformURL = cloudinary.url(public_id, {
+//           width: 128,
+//           height: 128,
+//         });
+//         item.image = { publicId: public_id, url: transformURL };
+//       }
+//       await item.save();
+//       res.redirect(item.url);
+//     }
+//   }),
+// ];
 
 exports.item_delete_get = asyncHandler(async (req, res, next) => {
   const item = await Item.findById(req.params.id, "name inStock").exec();
