@@ -74,8 +74,27 @@ exports.item_create_post = [
         errors: errors,
       });
     } else {
-      const row = await queries.createItem(item);
-      const item_id = row[0].item_id;
+      let row;
+      let item_id;
+      try {
+        row = await queries.createItem(item);
+        item_id = row[0].item_id;
+      } catch (err) {
+        const allCategories = await queries.getCategoryList();
+
+        for (const category of allCategories) {
+          if (item.category.includes(category.id.toString())) {
+            category.checked = "true";
+          }
+        }
+
+        return res.render("itemForm", {
+          title: "Create item",
+          allCategories,
+          item: item,
+          errors: [{ msg: "Item name is already in use" }],
+        });
+      }
 
       if (req.file) {
         const upload = await new Promise((resolve) => {
@@ -194,7 +213,29 @@ exports.item_update_post = [
         requirePass: true,
       });
     } else {
-      const updatedItemIds = await queries.updateItem(item);
+      let updatedItemIds;
+      try {
+        updatedItemIds = await queries.updateItem(item);
+        console.log(updatedItemIds);
+        if (updatedItemIds?.error) throw new Error("duplicate name");
+      } catch (err) {
+        const allCategories = await queries.getCategoryList();
+
+        for (const category of allCategories) {
+          if (item.category.includes(category.id.toString())) {
+            category.checked = "true";
+          }
+        }
+
+        return res.render("itemForm", {
+          title: "Create item",
+          allCategories,
+          item: item,
+          errors: [{ msg: "Item name is already in use" }],
+          requirePass: true,
+        });
+      }
+
       if (req.file) {
         const publicId = updatedItemIds.img_public_id;
         const options = publicId

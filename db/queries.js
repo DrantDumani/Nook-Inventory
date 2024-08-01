@@ -114,7 +114,7 @@ exports.updateItem = async (item) => {
   } catch (err) {
     await client.query("ROLLBACK");
     console.log(err);
-    return err;
+    throw err;
   } finally {
     client.release();
   }
@@ -147,7 +147,7 @@ exports.getItemsInCategory = async (id) => {
 exports.createCategory = async (category) => {
   const { rows } = await pool.query(
     `INSERT INTO categories (name, description) VALUES
-    ($1, $2) ON CONFLICT DO NOTHING RETURNING id`,
+    ($1, $2) RETURNING id`,
     [category.name, category.description]
   );
   return rows[0].id;

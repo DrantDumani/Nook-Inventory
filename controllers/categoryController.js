@@ -52,8 +52,16 @@ exports.category_create_post = [
         errors: errors.array(),
       });
     } else {
-      const newCategoryId = await queries.createCategory(category);
-      res.redirect(`/inventory/category/${newCategoryId}`);
+      try {
+        const newCategoryId = await queries.createCategory(category);
+        res.redirect(`/inventory/category/${newCategoryId}`);
+      } catch (err) {
+        return res.render("categoryForm", {
+          title: "Create Category",
+          category: category,
+          errors: [{ msg: "Category name is already in use" }],
+        });
+      }
     }
   }),
 ];
@@ -137,8 +145,17 @@ exports.category_update_post = [
         requirePass: true,
       });
     } else {
-      const updatedCatId = await queries.updateCategory(category);
-      res.redirect(`/inventory/category/${updatedCatId}`);
+      try {
+        const updatedCatId = await queries.updateCategory(category);
+        res.redirect(`/inventory/category/${updatedCatId}`);
+      } catch (err) {
+        return res.render("categoryForm", {
+          title: "Create Category",
+          category: category,
+          errors: [{ msg: "Category name is already in use" }],
+          requirePass: true,
+        });
+      }
     }
   }),
 ];
