@@ -17,6 +17,15 @@ exports.validateItem = () => {
   ];
 };
 
+exports.validateCategory = () => {
+  return [
+    body("name", "Name must not be empty").trim().isLength({ min: 1 }),
+    body("description", "Description cannot be empty")
+      .trim()
+      .isLength({ min: 1 }),
+  ];
+};
+
 exports.validatePw = () => {
   return body("password", "Password is incorrect")
     .trim()

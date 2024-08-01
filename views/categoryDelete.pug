@@ -18,7 +18,7 @@ block content
         strong (This action is irreversible!)
       
       form.delete-form(method="POST")
-        input(type="hidden" value=category._id name="categoryId")
+        input(type="hidden" value=category.id name="categoryId")
         div.label-input
           label(for="password") Password:
           input#password(type="password" required name="password")

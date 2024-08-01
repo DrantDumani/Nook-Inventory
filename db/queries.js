@@ -1,3 +1,4 @@
+const category = require("../models/category");
 const pool = require("./pool");
 
 exports.countItemsAndCategories = async () => {
@@ -124,4 +125,45 @@ exports.getCategoryList = async () => {
     "SELECT id, name FROM categories ORDER BY name ASC"
   );
   return rows;
+};
+
+exports.getCategoryById = async (id) => {
+  const { rows } = await pool.query("SELECT * FROM categories WHERE id = $1", [
+    id,
+  ]);
+  return rows[0];
+};
+
+exports.getItemsInCategory = async (id) => {
+  const { rows } = await pool.query(
+    `SELECT items.id, items.name FROM items 
+    JOIN item_categories ON items.id = item_categories.item_id
+    WHERE cat_id = $1`,
+    [id]
+  );
+  return rows;
+};
+
+exports.createCategory = async (category) => {
+  const { rows } = await pool.query(
+    `INSERT INTO categories (name, description) VALUES
+    ($1, $2) ON CONFLICT DO NOTHING RETURNING id`,
+    [category.name, category.description]
+  );
+  return rows[0].id;
+};
+
+exports.deleteCategory = async (id) => {
+  await pool.query("DELETE FROM categories WHERE id = $1", [id]);
+};
+
+exports.updateCategory = async (category) => {
+  const { rows } = await pool.query(
+    `UPDATE categories SET 
+    name = $1, 
+    description = $2
+    WHERE id = $3 RETURNING id`,
+    [category.name, category.description, category.id]
+  );
+  return rows[0].id;
 };

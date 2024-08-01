@@ -124,7 +124,7 @@ exports.item_delete_post = [
         });
       }
     } else {
-      const deletedItem = await queries.deleteItemById(req.params.id);
+      const deletedItem = await queries.deleteItemById(req.body.itemId);
       if (deletedItem) {
         await cloudinary.uploader.destroy(deletedItem.img_public_id);
       }

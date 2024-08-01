@@ -6,7 +6,7 @@ block content
     ul.content-list
       each category in categories 
         li
-          a(href=category.url) #{category.name}
+          a(href=`/inventory/category/${category.id}`) #{category.name}
   
   else
     p There are no categories listed in the inventory
