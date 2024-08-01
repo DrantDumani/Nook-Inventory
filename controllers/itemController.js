@@ -1,23 +1,11 @@
-const Item = require("../models/item");
-const Category = require("../models/category");
 const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
+const { validationResult } = require("express-validator");
+const validation = require("../middleware/validation");
+const upload = require("../multer/multerConfig");
+const cloudinary = require("../cloudinary/cloudinaryConfig");
 const queries = require("../db/queries");
+const handleCheckBoxInput = require("../middleware/checkboxToArray");
 require("dotenv").config();
-
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 1000000, files: 1 },
-});
-
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
 
 exports.index = asyncHandler(async (req, res, next) => {
   const result = await queries.countItemsAndCategories();
@@ -32,26 +20,6 @@ exports.index = asyncHandler(async (req, res, next) => {
 exports.item_list = asyncHandler(async (req, res, next) => {
   const allItems = await queries.getItemList();
   res.render("itemList", { allItems, title: "Item List" });
-});
-
-exports.OLDsingle_item = asyncHandler(async (req, res, next) => {
-  const singleItem = await Item.findById(req.params.id)
-    .populate({
-      path: "category",
-      select: "name",
-    })
-    .exec();
-
-  if (!singleItem) {
-    const err = new Error("Item not found.");
-    err.status = 404;
-    return next(err);
-  }
-
-  res.render("itemDetail", {
-    title: singleItem.name,
-    singleItem,
-  });
 });
 
 exports.single_item = asyncHandler(async (req, res, next) => {
@@ -77,22 +45,8 @@ exports.item_create_get = asyncHandler(async (req, res, next) => {
 
 exports.item_create_post = [
   upload.single("image-file"),
-  (req, res, next) => {
-    if (!Array.isArray(req.body.category)) {
-      req.body.category = req.body.category ? [req.body.category] : [];
-    }
-    next();
-  },
-
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
-  body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
-  body("category", "Pick at least one category").isArray({ min: 1 }),
-  body("stock", "Stock cannot be empty")
-    .isInt({ min: 0 })
-    .withMessage("Stock must be whole number greater than -1"),
-  body("price", "Price must not be empty")
-    .isInt({ min: 1 })
-    .withMessage("Price must be whole number greater than 0"),
+  handleCheckBoxInput.checkBoxToArray,
+  validation.validateItem(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req).array();
@@ -153,7 +107,7 @@ exports.item_delete_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.item_delete_post = [
-  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
+  validation.validatePw(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -207,23 +161,9 @@ exports.item_update_get = asyncHandler(async (req, res, next) => {
 
 exports.item_update_post = [
   upload.single("image-file"),
-  (req, res, next) => {
-    if (!Array.isArray(req.body.category)) {
-      req.body.category = req.body.category ? [req.body.category] : [];
-    }
-    next();
-  },
-
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
-  body("description", "Summary must not be blank").trim().isLength({ min: 1 }),
-  body("category", "Pick at least one category").isArray({ min: 1 }),
-  body("stock", "Stock cannot be empty")
-    .isInt({ min: 0 })
-    .withMessage("Stock must be whole number greater than -1"),
-  body("price", "Price must not be empty")
-    .isInt({ min: 1 })
-    .withMessage("Price must be whole number greater than 0"),
-  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
+  handleCheckBoxInput.checkBoxToArray,
+  validation.validateItem(),
+  validation.validatePw(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -255,7 +195,6 @@ exports.item_update_post = [
       });
     } else {
       const updatedItemIds = await queries.updateItem(item);
-      console.log(updatedItemIds);
       if (req.file) {
         const publicId = updatedItemIds.img_public_id;
         const options = publicId
@@ -270,7 +209,6 @@ exports.item_update_post = [
         });
 
         const { public_id } = upload;
-        console.log(public_id);
         const transformURL = cloudinary.url(public_id, {
           width: 128,
           height: 128,
