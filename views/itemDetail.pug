@@ -20,5 +20,5 @@ block content
             a.sub-list-link(href=`/inventory/category/${category.catId}`) #{category.catName}
 
       div.link-btn-container
-        a.link-btn(href=singleItem.url+"/update") Update Item
-        a.link-btn.delete-link-btn(href=singleItem.url+"/delete") Delete Item
+        a.link-btn(href=`/inventory/item/${singleItem.id}/update`) Update Item
+        a.link-btn.delete-link-btn(href=`/inventory/item/${singleItem.id}/delete`) Delete Item

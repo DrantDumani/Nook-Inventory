@@ -28,7 +28,7 @@ block content
               label(for=category.id) &nbsp;#{category.name}
       div.label-input
         label(for="stock") In Stock:
-        input#stock(type="number" required name="stock" placeholder="Item Amount" value=(item ? item.inStock : 0))
+        input#stock(type="number" required name="stock" placeholder="Item Amount" value=(item ? item.instock : 0))
 
       div.label-input
         label(for="price") Price: 
