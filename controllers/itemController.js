@@ -5,7 +5,6 @@ const upload = require("../multer/multerConfig");
 const cloudinary = require("../cloudinary/cloudinaryConfig");
 const queries = require("../db/queries");
 const handleCheckBoxInput = require("../middleware/checkboxToArray");
-require("dotenv").config();
 
 exports.index = asyncHandler(async (req, res, next) => {
   const result = await queries.countItemsAndCategories();

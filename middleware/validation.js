@@ -1,5 +1,7 @@
-// const asyncHandler = require("express-async-handler");
 const { body } = require("express-validator");
+require("dotenv").config();
+
+const invPassword = process.env.INV_PASSWORD;
 
 exports.validateItem = () => {
   return [
@@ -27,7 +29,5 @@ exports.validateCategory = () => {
 };
 
 exports.validatePw = () => {
-  return body("password", "Password is incorrect")
-    .trim()
-    .equals("KKJongaraBestSong");
+  return body("password", "Password is incorrect").trim().equals(invPassword);
 };

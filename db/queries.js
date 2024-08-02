@@ -1,4 +1,3 @@
-const category = require("../models/category");
 const pool = require("./pool");
 
 exports.countItemsAndCategories = async () => {
