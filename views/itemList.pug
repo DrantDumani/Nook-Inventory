@@ -7,7 +7,7 @@ block content
       each item in allItems
         li
           a(href=`/inventory/item/${item.id}`) #{item.name} 
-          | - $#{item.price}
+          | - #{item.price} Bells
   
   else 
     p There are no items in the inventory.
