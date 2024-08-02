@@ -11,10 +11,10 @@ block content
         ul.sub-list
           each item in allItems
             li
-              a.sub-list-link(href=item.url) #{item.name}
+              a.sub-list-link(href=`/inventory/item/${item.id}`) #{item.name}
       else
         p There are no items in this category
     
     div.link-btn-container
-      a.link-btn(href=category.url+"/update") Update Category 
-      a.link-btn.delete-link-btn(href=category.url+"/delete") Delete Category
+      a.link-btn(href=`/inventory/category/${category.id}/update`) Update Category 
+      a.link-btn.delete-link-btn(href=`/inventory/category/${category.id}/delete`) Delete Category

@@ -6,8 +6,8 @@ block content
     ul.content-list
       each item in allItems
         li
-          a(href=item.url) #{item.name} 
-          | - $#{item.price}
+          a(href=`/inventory/item/${item.id}`) #{item.name} 
+          | - #{item.price} Bells
   
   else 
     p There are no items in the inventory.

@@ -88,6 +88,7 @@ nav {
   border: 1px solid #000;
   border-radius: 4px;
   width: 100%;
+  max-width: 18.125rem;
   text-align: center;
   background-color: #84ff84;
   color: #000;
@@ -230,5 +231,10 @@ form button {
   .main-content {
     padding-left: 3rem;
     padding-right: 3rem;
+  }
+
+  .btn-container {
+    display: flex;
+    justify-content: center;
   }
 }

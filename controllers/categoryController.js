@@ -1,10 +1,10 @@
-const Item = require("../models/item");
-const Category = require("../models/category");
 const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
+const { validationResult } = require("express-validator");
+const validation = require("../middleware/validation");
+const queries = require("../db/queries");
 
 exports.category_list = asyncHandler(async (req, res, next) => {
-  const categories = await Category.find({}, "name").sort({ name: 1 }).exec();
+  const categories = await queries.getCategoryList();
   res.render("categoryList", {
     title: "Category List",
     categories: categories,
@@ -13,10 +13,8 @@ exports.category_list = asyncHandler(async (req, res, next) => {
 
 exports.single_category = asyncHandler(async (req, res, next) => {
   const [category, itemsInCategory] = await Promise.all([
-    Category.findById(req.params.id).exec(),
-    Item.find({ category: req.params.id }, "name price")
-      .sort({ name: 1 })
-      .exec(),
+    queries.getCategoryById(req.params.id),
+    queries.getItemsInCategory(req.params.id),
   ]);
 
   if (!category) {
@@ -37,49 +35,41 @@ exports.category_create_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.category_create_post = [
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
-  body("description", "Description cannot be empty")
-    .trim()
-    .isLength({ min: 1 }),
+  validation.validateCategory(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    let duplicateNameErr = "";
 
-    const nameExists = await Category.findOne({
-      name: req.body.name,
-    })
-      .collation({ locale: "en", strength: 2 })
-      .exec();
-
-    if (nameExists) {
-      duplicateNameErr =
-        "There is another category with that name in the inventory.";
-    }
-
-    const category = new Category({
+    const category = {
       name: req.body.name,
       description: req.body.description,
-    });
+    };
 
-    if (!errors.isEmpty() || duplicateNameErr) {
+    if (!errors.isEmpty()) {
       res.render("categoryForm", {
         title: "Create Category",
         category: category,
         errors: errors.array(),
-        nameErr: duplicateNameErr,
       });
     } else {
-      await category.save();
-      res.redirect(category.url);
+      try {
+        const newCategoryId = await queries.createCategory(category);
+        res.redirect(`/inventory/category/${newCategoryId}`);
+      } catch (err) {
+        return res.render("categoryForm", {
+          title: "Create Category",
+          category: category,
+          errors: [{ msg: "Category name is already in use" }],
+        });
+      }
     }
   }),
 ];
 
 exports.category_delete_get = asyncHandler(async (req, res, next) => {
   const [category, itemsInCategory] = await Promise.all([
-    Category.findById(req.params.id).exec(),
-    Item.find({ category: req.params.id }, "name").sort({ name: 1 }).exec(),
+    queries.getCategoryById(req.params.id),
+    queries.getItemsInCategory(req.params.id),
   ]);
 
   if (!category) {
@@ -94,33 +84,32 @@ exports.category_delete_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.category_delete_post = [
-  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
+  validation.validatePw(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
-    const [category, itemsInCategory] = await Promise.all([
-      Category.findById(req.params.id).exec(),
-      Item.find({ category: req.params.id }, "name").sort({ name: 1 }).exec(),
-    ]);
+    if (!errors.isEmpty()) {
+      const [category, itemsInCategory] = await Promise.all([
+        queries.getCategoryById(req.params.id),
+        queries.getItemsInCategory(req.params.id),
+      ]);
 
-    if (itemsInCategory.length || !errors.isEmpty()) {
-      res.render("categoryDelete", {
+      return res.render("categoryDelete", {
         title: "Delete Category",
         allItems: itemsInCategory,
         category: category,
         errors: errors.array(),
       });
-      return;
     } else {
-      await Category.findByIdAndDelete(req.body.categoryId);
+      await queries.deleteCategory(req.body.categoryId);
       res.redirect("/inventory/categories");
     }
   }),
 ];
 
 exports.category_update_get = asyncHandler(async (req, res, next) => {
-  const category = await Category.findById(req.params.id).exec();
+  const category = await queries.getCategoryById(req.params.id);
 
   if (!category) {
     const err = new Error("Category not found");
@@ -136,53 +125,37 @@ exports.category_update_get = asyncHandler(async (req, res, next) => {
 });
 
 exports.category_update_post = [
-  body("name", "Name must not be empty").trim().isLength({ min: 1 }),
-  body("description", "Description cannot be empty")
-    .trim()
-    .isLength({ min: 1 }),
-  body("password", "Password is incorrect").trim().equals("KKJongaraBestSong"),
+  validation.validateCategory(),
+  validation.validatePw(),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
-    let duplicateNameErr = "";
-
-    const [validId, nameExists] = await Promise.all([
-      Category.findById(req.params.id, "name").exec(),
-      Category.findOne({ name: req.body.name })
-        .collation({ locale: "en", strength: 2 })
-        .exec(),
-    ]);
-
-    if (
-      validId &&
-      nameExists &&
-      validId._id.toString() !== nameExists._id.toString()
-    ) {
-      duplicateNameErr =
-        "There is another category with that name in the inventory.";
-    }
-
-    const category = new Category({
+    const category = {
       name: req.body.name,
       description: req.body.description,
-      _id: req.params.id,
-    });
+      id: req.params.id,
+    };
 
-    if (!errors.isEmpty() || duplicateNameErr) {
+    if (!errors.isEmpty()) {
       res.render("categoryForm", {
         title: "Update Category",
         category: category,
         errors: errors.array(),
-        nameErr: duplicateNameErr,
         requirePass: true,
       });
     } else {
-      const updatedCategory = await Category.findByIdAndUpdate(
-        req.params.id,
-        category
-      );
-      res.redirect(updatedCategory.url);
+      try {
+        const updatedCatId = await queries.updateCategory(category);
+        res.redirect(`/inventory/category/${updatedCatId}`);
+      } catch (err) {
+        return res.render("categoryForm", {
+          title: "Create Category",
+          category: category,
+          errors: [{ msg: "Category name is already in use" }],
+          requirePass: true,
+        });
+      }
     }
   }),
 ];
